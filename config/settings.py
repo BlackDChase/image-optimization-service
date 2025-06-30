@@ -5,10 +5,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+IMAGE_ROOT = os.path.join(MEDIA_ROOT, 'images')
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
+
+APPEND_SLASH = False
 
 INSTALLED_APPS = [
     'django_prometheus',
@@ -55,6 +60,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+IMAGE_CACHE_PROCESSED = os.environ.get(
+    'IMAGE_CACHE_PROCESSED', 'False').lower() == 'true'
+IMAGE_CACHE_TTL = int(os.environ.get(
+    'IMAGE_CACHE_TTL', '3600'))  # 1 hour default
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
@@ -92,18 +101,34 @@ LOGGING = {
             'filename': '/app/logs/django.log',
             'formatter': 'verbose',
         },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
     },
     'root': {
-        'handlers': ['file'],
+        'handlers': ['file', 'console'],
         'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     },
 }
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'URL_FORMAT_OVERRIDE': None,
 }
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Django API',
+    'DESCRIPTION': 'Image processing API',
     'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'OAS_VERSION': '3.0.3',
 }
